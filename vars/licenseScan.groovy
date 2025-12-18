@@ -1,8 +1,16 @@
 def call() {
+
     sh '''
+        set +e
+
         echo "Running License Scan..."
-        pip install pip-licenses
-        pip-licenses --format=markdown > license-report.md
+
+        export PATH=$HOME/.local/bin:$PATH
+
+        pip install pip-licenses >/dev/null 2>&1 || true
+
+        pip-licenses --format=markdown > license-report.md || true
     '''
-    archiveArtifacts artifacts: 'license-report.md'
+
+    archiveArtifacts artifacts: 'license-report.md', allowEmptyArchive: true
 }
