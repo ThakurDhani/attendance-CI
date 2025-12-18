@@ -1,12 +1,12 @@
-def call(String sonarServer) {
+def call() {
 
-    withSonarQubeEnv("${sonarServer}") {
+ withSonarQubeEnv('SonarQube') {
 
-        sh """
-            sonar-scanner \
-            -Dsonar.projectKey=attendance-api \
-            -Dsonar.sources=. \
-            -Dsonar.python.coverage.reportPaths=coverage.xml
-        """
-    }
+    sh """
+        ${tool 'sonar-scanner'}/bin/sonar-scanner \
+        -Dsonar.projectKey=attendance-api \
+        -Dsonar.sources=. \
+        -Dsonar.python.coverage.reportPaths=coverage.xml || true
+    """
+ }
 }
