@@ -3,34 +3,34 @@ def call() {
     sh '''
         echo "Running Gitleaks..."
 
-        # Install dependencies
-        sudo apt-get update -y
-        sudo apt-get install -y wget unzip
+        # Install tools required
+        sudo apt-get update -y >/dev/null
+        sudo apt-get install -y wget unzip >/dev/null
 
-        # Install Gitleaks if missing
         if ! command -v gitleaks &> /dev/null
         then
-            echo "Downloading Gitleaks latest release..."
+            echo "Installing gitleaks..."
+
             wget -q https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64.zip
 
-            echo "Unzipping..."
-            unzip -o gitleaks-linux-amd64.zip
+            unzip -o gitleaks-linux-amd64.zip > /dev/null
 
-            echo "Moving binary..."
-            sudo mv gitleaks /usr/local/bin/
+            sudo mv gitleaks /usr/local/bin/gitleaks
 
-            echo "Making binary executable"
             sudo chmod +x /usr/local/bin/gitleaks
 
-            gitleaks version
+            echo "GitLeaks installed -> $(gitleaks version)"
+        else
+            echo "GitLeaks already installed -> $(gitleaks version)"
         fi
 
-        echo "Running scan..."
+        echo "Executing Gitleaks scan..."
+
         gitleaks detect \
-        --source . \
-        --report-format json \
-        --report-path gitleaks-report.json \
-        || true
+            --source . \
+            --report-format json \
+            --report-path gitleaks-report.json \
+            || echo "GitLeaks returned findings or exit code - continuing pipeline"
     '''
 
     archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
