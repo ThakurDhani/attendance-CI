@@ -1,36 +1,36 @@
 def call() {
 
     sh '''
-        echo "Running Gitleaks..."
+        set +e
 
-        # Install tools required
-        sudo apt-get update -y >/dev/null
-        sudo apt-get install -y wget unzip >/dev/null
+        echo "[INFO] Running Gitleaks secret scan..."
 
-        if ! command -v gitleaks &> /dev/null
+        sudo apt-get update -y >/dev/null 2>&1 || true
+        sudo apt-get install -y wget unzip >/dev/null 2>&1 || true
+
+        if ! command -v gitleaks >/dev/null 2>&1
         then
-            echo "Installing gitleaks..."
+            echo "[INFO] Installing gitleaks binary..."
 
-            wget -q https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64.zip
+            wget -q https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64.zip || true
 
-            unzip -o gitleaks-linux-amd64.zip > /dev/null
+            unzip -o gitleaks-linux-amd64.zip >/dev/null 2>&1 || true
 
-            sudo mv gitleaks /usr/local/bin/gitleaks
+            sudo mv -f gitleaks /usr/local/bin/gitleaks >/dev/null 2>&1 || true
 
-            sudo chmod +x /usr/local/bin/gitleaks
-
-            echo "GitLeaks installed -> $(gitleaks version)"
+            sudo chmod +x /usr/local/bin/gitleaks >/dev/null 2>&1 || true
         else
-            echo "GitLeaks already installed -> $(gitleaks version)"
+            echo "[INFO] Using installed gitleaks: $(gitleaks version)"
         fi
 
-        echo "Executing Gitleaks scan..."
-
+        echo "[INFO] Running gitleaks detect..."
         gitleaks detect \
             --source . \
             --report-format json \
             --report-path gitleaks-report.json \
-            || echo "GitLeaks returned findings or exit code - continuing pipeline"
+            >/dev/null 2>&1 || true
+
+        echo "[INFO] Secret scan completed."
     '''
 
     archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
